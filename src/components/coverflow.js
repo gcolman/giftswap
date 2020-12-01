@@ -12,27 +12,6 @@ class CoverFlowComponent extends React.Component {
           };
     }
     
-    unwrap(i) {
-        //this.props.present[i].pressieImg="img1.jpg";
-        //console.log(this.props.present[i].pressieImg);
-          console.log(i);  
-      }
-
-    state = {wrapped: true}
-
-    toggleImage = (i) => {
-        this.setState(state => ({ wrapped: !state.wrapped }))
-        this.p = this.props.present;
-        this.p[i].state="unwrapped";
-        this.p[i].receiver=this.props.nextUser.email;
-        //this.props.present = this.p;
-    }
-    
-    getImg(i,x){
-        return this.props.present[i][x];
-    }    
-
-
     handleData = (data) => {
         console.log(data);
         this.state.x=JSON.parse(data);
@@ -52,27 +31,27 @@ class CoverFlowComponent extends React.Component {
                 <Coverflow width="960" height="800" classes={{background: 'rgb(233, 23, 23)'}} className=''
                 displayQuantityOfSide={2}
                 navigation={false}
-                enableScroll={true}
+                enableScroll={false}
                 infiniteScroll={true}
                 clickable={true}
-                active={this.state.active}
+                active={this.props.activeIndex}
                 >
 
-                {/*  Iterate through the present array to create the images and buttons int he carousel */ } 
-                {this.props.present.map((pressie, i) => (   
+                {/*  Iterate through the giftData array to create the images and buttons int he carousel */ } 
+                {this.props.giftData.map((pressie, i) => (   
                     <div role="menuitem" tabIndex="0">
 
                         {/*  Using the tertiary operator to show an unwrapped div or a wrapped div */}
-                        {/*  based ont he state in the present object. Button pressed calles function to set object to unwrapped */}
-                        {this.props.present[i].state==="wrapped" ? (
+                        {/*  based ont he state in the giftData object. Button pressed calles function to set object to unwrapped */}
+                        {this.props.giftData[i].state==="wrapped" ? (
                             <span>
                                 <img src={process.env.PUBLIC_URL + 'images/' +pressie.wrapped} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
                                 <div className="navbar-brand" >
                                     {this.props.loggedIn === "true" && this.props.gamestate === "started" && this.props.itsMyTurn === "true" ? (
-                                        <Button variant="success" onClick={()=>this.toggleImage(i)}>Take me I'm yours!</Button>
+                                        <Button variant="success" onClick={event => this.props.giftSelectCallback(i)}>Take me I'm yours!</Button>
                                     ):(<div/>)}
                                     <br/>
-                                <span> Merry Xmas from {pressie.giver}</span>
+                                <span> Merry Xmas <br/>from {pressie.giver}</span>
                                 </div>   
                             </span>
                             ) : (
@@ -80,7 +59,7 @@ class CoverFlowComponent extends React.Component {
                                 <img src={process.env.PUBLIC_URL + 'images/' +pressie.unwrapped} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
                                 <div className="navbar-brand" >
                                     {this.props.loggedIn === "true" && this.props.gamestate === "started" && this.props.itsMyTurn === "true" ? ( // check weather to show the unwrap buttons etc.
-                                        <Button variant="danger" onClick={()=>this.toggleImage(i)}>Steal this from {pressie.receiver}</Button>
+                                        <Button variant="danger" onClick={event => this.props.giftStealCallback(i)}>Steal this from {pressie.receiver}</Button>
                                     ):(<div/>)}
                                       <br/>
                                 <span> Ho Ho Ho...<br/>it's yours! {pressie.receiver}</span>

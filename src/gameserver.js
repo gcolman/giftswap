@@ -41,7 +41,17 @@ wss.on('connection', function connection(ws) {
       newUser(ws);
     } else if(msg.type ==="state") {
       BroadcastMessage(JSON.stringify(msg));
-    }
+    } else if(msg.type ==="data") {
+      BroadcastMessage(JSON.stringify(msg));
+    } else if(msg.type ==="reset") {
+      BroadcastMessage(JSON.stringify(currentData));
+      BroadcastMessage(JSON.stringify(stateEvent));
+      loggedInUsers.body = [];
+    } else if(msg.type ==="giftSelect") {
+      handleGiftSelect(msg);
+    }  else if(msg.type ==="giftSteal") {
+      handleGiftSwap(msg);
+    } 
   });
   //endon
 });
@@ -53,6 +63,36 @@ BroadcastMessage = (data) => {
      }
    });
 };
+
+/**
+ * Handle a gift selection event
+ */
+handleGiftSelect = (msg) => {
+  //remove the user from the remaining users
+  removeRemainingUser(msg.user);
+}
+
+removeRemainingUser = (user) => {
+  for(i=0;i<allUsersRemainingToPlay.length;i++){
+    if(allUsersRemainingToPlay[i] === user) {
+      allUsersRemainingToPlay.splice(i, 1); 
+      console.log("remove " +user);
+    }
+  }
+}
+
+/**
+ * Handle a gift swap event
+ */
+handleGiftSwap = (msg) => {
+  //add the user back into the remaining users and remove the receibver.
+  removeRemainingUser(msg.user);
+  allUsersRemainingToPlay.push(msg.victim);
+  console.log("adding " +msg.victim);
+  nextUserEvent.email = msg.victim;
+  nextUserEvent.remainingUsers = allUsersRemainingToPlay.length;
+  BroadcastMessage(JSON.stringify(nextUserEvent));
+}
 
 /**
  * Handle login data
@@ -108,7 +148,7 @@ handleLogout = (data) => {
  * New user
  */
 newUser = (ws) => {
-  //get the next user
+  //If a user i
   var user = allUsersRemainingToPlay[Math.floor(Math.random() * allUsersRemainingToPlay.length)];
   nextUserEvent.email = user;
   nextUserEvent.remainingUsers = allUsersRemainingToPlay.length;

@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 import Alert from 'react-bootstrap/Alert'
+import Jumbotron from 'react-bootstrap/Jumbotron'
 
 class Message extends React.Component {
   constructor(props) {
@@ -12,14 +13,10 @@ class Message extends React.Component {
 
   render() {
     return(
-      <div>
-      <Alert show={this.props.gamestate === "paused" } variant="primary"  disissible>
-      <Alert.Heading>The Game Has Been Paused</Alert.Heading>
-          <p>
-          be patient, be kind, be happy
-          </p>
-      </Alert>
-    </div>
+      <Jumbotron>
+          <h1>{this.props.parentState.msgHeading}</h1>
+        <p>{this.props.parentState.msgText}</p>
+      </Jumbotron>
     )
   }
 }

@@ -17,13 +17,13 @@ class NavBar extends React.Component {
       <nav className="navbar navbar-light bg-light">
       <div className="navbar-brand">
         <span className="badge badge-pill badge-info m-2" style={{ width: 50 }}>
-          3
+          {this.props.parentState.remainingUsers}
         </span>
         Players Remaining
       </div>
       {this.props.nextUser  ? ( //display different text depending on whether the game is running onr not.
         <div className="navbar-brand" >
-          It's {this.props.nextUser.email}'s turn!
+          It's {this.props.nextUser}'s turn!
         </div>
       ) :(
         <div className="navbar-brand" >
@@ -37,7 +37,7 @@ class NavBar extends React.Component {
           </div>
         ) : (
           <div className="navbar-brand" >
-            {this.state.user} &nbsp;
+            {this.props.parentState.loggedInUser} &nbsp;
             <a href="#" onClick={event => this.props.logoutFunc()}>logout</a>
               
           </div>        

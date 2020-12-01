@@ -12,7 +12,11 @@ import './App.css';
 import Lobby from './components/Lobby';
 import Userlist from './components/Userlist';
 
-const data = [{giver: 'Graeme Colman', wrapped: "1.jpg", unwrapped: "u1.jpg", state: "wrapped",  receiver: null, clue: "It's Big",},
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+const data = [{"giver": "Graeme Colman", "email": "gcolman", "chosen":"false", "wrapped": "1.jpg","unwrapped": "u1.jpg","state": "wrapped","receiver": null,"clue": "It's Big"},{"giver": "Ben Holmes", "email": "bholmes","chosen":"false", "wrapped": "5.jpg","unwrapped": "u5.jpg","state": "unwrapped","receiver": "Waaqas","clue": "Blue and round"},{"giver": "Anthony Kesterton", "email": "akesterton","chosen":"false", "wrapped": "2.jpg","unwrapped": "u2.jpg","state": "wrapped","receiver": null,"clue": "It's a baby"},{"giver": "Waaqas Kauser", "email": "wkauser","chosen":"false", "wrapped": "3.jpg","unwrapped": "u3.jpg","state": "wrapped","receiver": null,"clue": "kindness is doomed"},{"giver": "Jon Walton", "email": "jwalton","chosen":"false", "wrapped": "4.jpg","unwrapped": "u4.jpg","state": "wrapped","receiver": null,"clue": "ooo missus"},{"giver": "Simon Alcott", "email": "salcot","chosen":"false", "wrapped": "5.jpg","unwrapped": "u5.jpg","state": "wrapped","receiver": null,"clue": "monkey"},{"giver": "Jo Hodgson", "email": "jhodgson","chosen":"false", "wrapped": "1.jpg","unwrapped": "u6.jpg","state": "wrapped","receiver": null,"clue": "Err random"},{"giver": "Andy Downs", "email": "adownes","chosen":"false", "wrapped": "2.jpg","unwrapped": "u2.jpg","state": "wrapped","receiver": null,"clue": "ops a little bit"},{"giver": "Ben Holmes","chosen":"false", "wrapped": "4.jpg","unwrapped": "u4.jpg","state": "wrapped","receiver": null,"clue": "nice..."}];
+
+const datax = [{giver: 'Graeme Colman', wrapped: "1.jpg", unwrapped: "u1.jpg", state: "wrapped",  receiver: null, clue: "It's Big",},
 {giver: 'Graeme Colman', wrapped: "5.jpg", unwrapped: "u5.jpg", state: "unwrapped", receiver: "Waaqas", clue: "Blue and round",},
 {giver: 'Anthony Kesterton', wrapped: "2.jpg", unwrapped: "u2.jpg", state: "wrapped", receiver: null, clue: "It's a baby",},
 {giver: 'Waaqas Kauser', wrapped: "3.jpg", unwrapped: "u3.jpg", state: "wrapped", receiver: null, clue: "kindness is doomed",},
@@ -29,59 +33,59 @@ class App extends React.Component {
 
   constructor(props) {
     super(props);
-    this.state = {list:data, disp:users, loggedIn:"false", loggedInUser:"", gamestate:"play", nextUser:"", itsMyTurn:"false"};
+    this.state = {  
+        allData:data, 
+        disp:users, 
+        loggedIn:"false",
+        loggedInUser:"",
+        realAdminUser:"",
+        gamestate:"play", 
+        nextUser:"",
+        itsMyTurn:"false",
+        activeIndex:0,
+        remainingUsers:0,
+        messageShow: true,
+        msgHeading:"Welcome to the UKI SA Christmas Gift Game",
+        msgText:"The rules: Log into the app above. When it's your turn, browse through the gifts in the carousel and you have the option of unwrapping a new present or, you can steal an already unwrapped present from one of ypur colleagues! If a gift is stolen from you then you need to unwrap a new present! Have fun and Merry Christmas!"
+      };
+
     this.start = this.start.bind(this);
     this.stop = this.stop.bind(this);
     this.pause = this.pause.bind(this);
     this.reset = this.reset.bind(this);
     this.respin = this.respin.bind(this);
+    this.giftSelectCallback = this.giftSelectCallback.bind(this);
 
     this.login = this.login.bind(this);
     this.ws = new WebSocket('ws://localhost:8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
 
-    
+
     
     this.ws.onopen = (arg) => {
       // connection opened
     };
     
+    /**
+     * This is the main websocket message handler. Calls various funcitons based on the message type.
+     */
     this.ws.onmessage = (e) => {
-      var copyState = this.state;
       console.log(e.data);
       this.msg = JSON.parse(e.data);
 
       if(this.msg.type === "data"){
-         //game data  
+        this.handleUpdateData(this.msg);
       } else if(this.msg.type === "state") {
-         //State data change
-         if(this.msg.body === "started") {
-            this.start("fromWS");
-         } else if (this.msg.body === "stopped") {
-            this.stop("fromWS");
-         } else if (this.msg.body === "paused") {
-            this.pause("fromWS");
-        } 
+          this.handleUpdateState(this.msg);
       } else if(this.msg.type === "users") {
-        copyState.disp = this.msg.body;
-        this.setState(copyState);
-      }else if(this.msg.type === "loginSuccess") {
-        //changed to loggedIn = true
-        copyState.loggedIn = "true";
-        copyState.loggedInUser = this.msg.user;
-        this.setState(copyState);
-        Cookies.set('gwuser', this.msg.user);
-      }else if(this.msg.type === "loginError") {
+        this.handleUpdateUsers(this.msg);
+      } else if(this.msg.type === "loginSuccess") {
+        this.handleLoginSuccess(this.msg);
+      } else if(this.msg.type === "loginError") {
         //
       } else if(this.msg.type === "nextUser") {
-        copyState.nextUser = this.msg;
-        if(this.msg.email === this.state.loggedInUser) {
-          copyState.itsMyTurn = "true";
-        } else {
-          copyState.itsMyTurn = "false";
-        }
-        this.setState(copyState);
+        this.handleUpdateNextUser(this.msg);
       }
     };
     
@@ -89,6 +93,86 @@ class App extends React.Component {
         // an error occurred
     };
     this.ws.onclose = this.logout; // function implemented elsewhere
+  }
+
+
+    /**
+   * Refresh the view of the data.
+   * @param {*} msg 
+   */
+  handleUpdateData(msg){
+    var copyState = this.state;
+    copyState.allData = msg.body;
+    this.setState(copyState);
+  }
+
+  /**
+   * handle the chaange of state
+   * @param {*} msg 
+   */
+  handleUpdateState(msg){
+    if(this.msg.body === "started") {
+      this.start("fromWS");
+    } else if (this.msg.body === "stopped") {
+      this.stop("fromWS");
+    } else if (this.msg.body === "paused") {
+      this.pause("fromWS");
+    } 
+  }
+
+  /**
+   * a new list of users has been sent, update the app
+   * @param {*} msg 
+   */
+  handleUpdateUsers(msg){
+    var copyState = this.state;
+    copyState.disp = msg.body;
+    this.setState(copyState);
+  }
+
+  /**
+   * On login success callback, then update the state and then set a client side cookie.
+   * @param {*} msg 
+   */
+  handleLoginSuccess(msg){
+    var copyState = this.state;
+    copyState.loggedIn = "true";
+    copyState.loggedInUser = msg.user;
+    this.setState(copyState);
+    Cookies.set('gwuser', msg.user);
+  }
+
+
+  /**
+   * Update things to do with next user beiing chosen.
+   * @param {*} msg 
+   */  
+  handleUpdateNextUser = async (msg) =>{
+      copyState = this.state;
+      copyState.messageShow = true;
+      copyState.msgHeading="Oooh, who is the next player going to be?";
+      copyState.msgText="";
+      this.setState(copyState);
+      await delay(1000);
+      var i;
+      for(i=3;i>=1;i--) {
+        copyState.msgHeading=i;
+        this.setState(copyState);
+        await delay(1000);
+      }
+      copyState.msgHeading= msg.email + ", come on down!";
+      this.setState(copyState);
+
+    var copyState = this.state;
+    copyState.nextUser = msg.email;
+    copyState.remainingUsers = msg.remainingUsers;
+    
+    if(msg.email === this.state.loggedInUser) {
+      copyState.itsMyTurn = "true";
+    } else {
+      copyState.itsMyTurn = "false";
+    }
+    this.setState(copyState);
   }
 
 
@@ -102,6 +186,7 @@ class App extends React.Component {
       var copyState = this.state;
       copyState.loggedIn = "true";
       copyState.loggedInUser = Cookies.get("gwuser");
+      copyState.remainingUsers = this.state.allData.length;
       this.setState(copyState);
     }
   }
@@ -142,7 +227,7 @@ class App extends React.Component {
     copyState.gamestate = "started";
     this.setState(copyState);
     console.log("start! " + fromEvent);
-    if(fromEvent != "fromWS") { //if this event was generated here, then we want send the event to the server. otherwise we are reacting to anothers event 
+    if(fromEvent !== "fromWS") { //if this event was generated here, then we want send the event to the server. otherwise we are reacting to anothers event 
       console.log("start!!!!");
       this.ws.send('{ "type": "state", "body": "started"}');
     }
@@ -160,7 +245,7 @@ class App extends React.Component {
     var copyState = this.state;
     copyState.gamestate = "stopped";
     this.setState(copyState);
-    if(fromEvent != "fromWS") { //if this event was generated here, then we want send the event to the server. otherwise we are reacting to anothers event 
+    if(fromEvent !== "fromWS") { //if this event was generated here, then we want send the event to the server. otherwise we are reacting to anothers event 
       this.ws.send('{ "type": "state", "body": "stopped"}');
     }    
   }
@@ -177,7 +262,7 @@ class App extends React.Component {
     copyState.gamestate = "paused";
     this.setState(copyState);
     console.log("pause!");
-    if(fromEvent != "fromWS") { //if this event was generated here, then we want send the event to the server. otherwise we are reacting to anothers event 
+    if(fromEvent !== "fromWS") { //if this event was generated here, then we want send the event to the server. otherwise we are reacting to anothers event 
       this.ws.send('{ "type": "state", "body": "paused"}');
     }
   }
@@ -196,6 +281,43 @@ class App extends React.Component {
    */
   reset = () => {
     console.log("reset!");
+    this.ws.send('{ "type": "reset"}');
+  }
+
+  /**
+   *   Callback for coverflow component 
+   *    When a gift is selected then set the data to show it. Check the activeindex for the gift to be updated.
+   */
+  giftSelectCallback = (index) => {
+    //unwrap this present!
+    this.unwrap(index);
+    this.ws.send('{ "type": "data", "body":' +JSON.stringify(this.state.allData) +'}');
+    this.ws.send('{ "type": "giftSelect", "user":"' +this.state.loggedInUser +'"}');
+  }
+
+  /**
+   * The mechanics of unwrapping is to update the data.
+   * @param {} index 
+   */
+  unwrap(index){
+    this.copystate = this.state;
+    this.copystate.allData[index].state = "unwrapped";
+    this.copystate.allData[index].receiver = this.state.loggedInUser;
+    this.copystate.itsMyTurn = "false";
+    this.setState(this.copystate);
+  }
+
+  /**
+   * On a steal, we give the present to the loggedInUser. 
+   * We also need to put the user back into the nextUser to select position.
+   * @param {*} index 
+   */
+  giftStealCallback = (index) => {
+    // give the go back to who owned the present.
+    this.ws.send('{ "type": "data", "body":' +JSON.stringify(this.state.allData) +'}');
+    this.ws.send('{ "type": "giftSteal", "user":"' +this.state.loggedInUser +'", "victim":"' +this.state.allData[index].receiver +'"}');
+    this.unwrap(index);
+    
   }
 
   /**
@@ -204,21 +326,26 @@ class App extends React.Component {
     render() {
       return(
         <div className="App">
-          <NavBar loginFunc={this.login} logoutFunc={this.logout} userLoggedIn={this.state.loggedIn} nextUser={this.state.nextUser} gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn}/>  
-          <Adminbar start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} respin={this.respin}  />
+          <NavBar parentState={this.state}  loginFunc={this.login} logoutFunc={this.logout} userLoggedIn={this.state.loggedIn} nextUser={this.state.nextUser} gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn}/>  
           
-          <Message gamestate={this.state.gamestate}/>
+          {this.state.loggedInUser === "gcolman" ? (
+          <Adminbar parentState={this.state} start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} respin={this.respin}  />
+          ) : (
+            <div/>
+          )} 
+          {this.state.messageShow &&
+            <Message parentState={this.state}/>
+          }
           {this.state.gamestate === "stopped" ? 
             (<div>
                 <Lobby/>
             </div> )
           :(
-            <CoverFlowComponent present={this.state.list} loggedIn={this.state.loggedIn}  gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn}/>
+            <CoverFlowComponent giftData={this.state.allData} giftSelectCallback={this.giftSelectCallback} giftStealCallback={this.giftStealCallback} activeIndex={this.state.activeIndex} loggedIn={this.state.loggedIn}  gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn}/>
           )}
           <div>
             <Userlist loggedInUsers={this.state.disp}  />
           </div>
-          <Spinner/>
       </div>
       )
     }
