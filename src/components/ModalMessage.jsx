@@ -2,11 +2,11 @@ import React from "react";
 import { Button } from "react-bootstrap";
 import Alert from 'react-bootstrap/Alert'
 import Jumbotron from 'react-bootstrap/Jumbotron'
-import Container from 'react-bootstrap/Container'
 
 
 
-class Message extends React.Component {
+
+class ModalMessage extends React.Component {
   constructor(props) {
       super(props);      
   }
@@ -14,17 +14,11 @@ class Message extends React.Component {
   render() {
     return(
       <Jumbotron>
-        <Container>
-        <h2>{this.props.parentState.msgHeading}</h2>
+          <h1>{this.props.parentState.msgHeading}</h1>
         <p>{this.props.parentState.msgText}</p>
-        <p>
-          <Button variant="primary" onClick={this.props.messageHideCallback}>OK</Button>
-       </p>
-        </Container>
       </Jumbotron>
-
     )
   }
 }
 
-export default Message;
+export default ModalMessage;

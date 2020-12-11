@@ -14,16 +14,22 @@ class Adminbar extends React.Component {
     return(
       <nav className="navbar navbar-light bg-light">
         <div className="navbar-brand" >
-          <Button onClick={this.props.start}>start</Button> &nbsp; 
-          <Button onClick={this.props.pause}>pause</Button> &nbsp;
-          <Button onClick={this.props.stop}>stop</Button> &nbsp;
-          <Button onClick={this.props.respin}>respin</Button> &nbsp;
-          <Button onClick={this.props.reset}>reset</Button> 
+          
+          { this.props.parentState.gamestate === "started" ? (
+            <div>
+            <Button onClick={this.props.pause}>pause</Button> &nbsp;
+            <Button onClick={this.props.respin}>Next Player</Button> &nbsp;
+            <Button onClick={this.props.stop}>stop</Button>&nbsp;
+            <Button onClick={this.props.reset}>reset</Button> &nbsp;
+            <Button onClick={this.props.reset}>reload</Button> &nbsp;
+           </div> 
+          ):(<Button onClick={this.props.start}>start</Button>)}
+          
         </div>
         <div>
-          <DropdownButton id="dropdown-basic-button" title="Dropdown button">
+          <DropdownButton id="dropdown-basic-button" title={this.props.parentState.loggedInUser}>
           { this.props.parentState.allData.map((item, i) => (
-            <Dropdown.Item>{item.email}</Dropdown.Item>
+            <Dropdown.Item onClick={() => this.props.become(item.email)}>{item.email}</Dropdown.Item>
           ))}
           </DropdownButton>  
         </div>

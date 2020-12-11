@@ -2,49 +2,36 @@ import React from 'react';
 import NavBar from "./components/navbar";
 import Adminbar from "./components/Adminbar";
 import Message from "./components/Message";
-import Spinner from "./components/Spinner";
+//import ModalMessage from "./components/ModalMessage";
 import CoverFlowComponent from "./components/coverflow";
 import Cookies from 'js-cookie'
-
-
-
 import './App.css';
 import Lobby from './components/Lobby';
 import Userlist from './components/Userlist';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
-
-const data = [{"giver": "Graeme Colman", "email": "gcolman", "chosen":"false", "wrapped": "1.jpg","unwrapped": "u1.jpg","state": "wrapped","receiver": null,"clue": "It's Big"},{"giver": "Ben Holmes", "email": "bholmes","chosen":"false", "wrapped": "5.jpg","unwrapped": "u5.jpg","state": "unwrapped","receiver": "Waaqas","clue": "Blue and round"},{"giver": "Anthony Kesterton", "email": "akesterton","chosen":"false", "wrapped": "2.jpg","unwrapped": "u2.jpg","state": "wrapped","receiver": null,"clue": "It's a baby"},{"giver": "Waaqas Kauser", "email": "wkauser","chosen":"false", "wrapped": "3.jpg","unwrapped": "u3.jpg","state": "wrapped","receiver": null,"clue": "kindness is doomed"},{"giver": "Jon Walton", "email": "jwalton","chosen":"false", "wrapped": "4.jpg","unwrapped": "u4.jpg","state": "wrapped","receiver": null,"clue": "ooo missus"},{"giver": "Simon Alcott", "email": "salcot","chosen":"false", "wrapped": "5.jpg","unwrapped": "u5.jpg","state": "wrapped","receiver": null,"clue": "monkey"},{"giver": "Jo Hodgson", "email": "jhodgson","chosen":"false", "wrapped": "1.jpg","unwrapped": "u6.jpg","state": "wrapped","receiver": null,"clue": "Err random"},{"giver": "Andy Downs", "email": "adownes","chosen":"false", "wrapped": "2.jpg","unwrapped": "u2.jpg","state": "wrapped","receiver": null,"clue": "ops a little bit"},{"giver": "Ben Holmes","chosen":"false", "wrapped": "4.jpg","unwrapped": "u4.jpg","state": "wrapped","receiver": null,"clue": "nice..."}];
-
-const datax = [{giver: 'Graeme Colman', wrapped: "1.jpg", unwrapped: "u1.jpg", state: "wrapped",  receiver: null, clue: "It's Big",},
-{giver: 'Graeme Colman', wrapped: "5.jpg", unwrapped: "u5.jpg", state: "unwrapped", receiver: "Waaqas", clue: "Blue and round",},
-{giver: 'Anthony Kesterton', wrapped: "2.jpg", unwrapped: "u2.jpg", state: "wrapped", receiver: null, clue: "It's a baby",},
-{giver: 'Waaqas Kauser', wrapped: "3.jpg", unwrapped: "u3.jpg", state: "wrapped", receiver: null, clue: "kindness is doomed",},
-{giver: 'Jon Walton', wrapped: "4.jpg", unwrapped: "u4.jpg", state: "wrapped", receiver: null, clue: "ooo missus",},
-{giver: 'Simon Alcott', wrapped: "5.jpg", unwrapped: "u5.jpg", state: "wrapped", receiver: null, clue: "monkey",},
-{giver: 'Jo Hodgson', wrapped: "1.jpg", unwrapped: "u6.jpg", state: "wrapped", receiver: null, clue: "Err random",},
-{giver: 'Andy Downs', wrapped: "2.jpg", unwrapped: "u2.jpg", state: "wrapped", receiver: null, clue: "ops a little bit",},
-{giver: 'Ben Holmes', wrapped: "4.jpg", unwrapped: "u4.jpg", state: "wrapped", receiver: null, clue: "nice...",},
-];
-const users = [ ];
+const data = [];
+const users = [];
 
 class App extends React.Component {
-
 
   constructor(props) {
     super(props);
     this.state = {  
-        allData:data, 
-        disp:users, 
-        loggedIn:"false",
-        loggedInUser:"",
-        realAdminUser:"",
-        gamestate:"play", 
-        nextUser:"",
-        itsMyTurn:"false",
-        activeIndex:0,
-        remainingUsers:0,
-        messageShow: true,
+        allData:data,         // Holds all of the pressie array data. This is what the front end UI displays 
+        disp:users,           // A list of users in the game 
+        loggedIn:"false",     // Is the current session logged onto the game
+        loggedInUser:"",      // Who is currently logged in
+        realAdminUser:"",     // If defined as an admin then who is that real user (so that the admin can also be a player)
+        isAdmin:"false",      // is current user the admin user?
+        gamestate:"play",     // State of the game stopped:play:paused
+        nextUser:"",          // The next user to play the game. 
+        itsMyTurn:"false",    // indicates if it's the current user's turn to play
+        activeIndex:0,        // The index of the present in the carousel - should move when this changes
+        remainingUsers:0,     // How many users are left to play
+        stealRound:"false",   // Indicates that this round of play started with a steal. If so no more steals allowed?
+        navbarMessage:"",     // The message to show in the navbar
+        messageShow: "true",    // Boolean to indicate if the message jumbptron should be shown.
         msgHeading:"Welcome to the UKI SA Christmas Gift Game",
         msgText:"The rules: Log into the app above. When it's your turn, browse through the gifts in the carousel and you have the option of unwrapping a new present or, you can steal an already unwrapped present from one of ypur colleagues! If a gift is stolen from you then you need to unwrap a new present! Have fun and Merry Christmas!"
       };
@@ -55,6 +42,8 @@ class App extends React.Component {
     this.reset = this.reset.bind(this);
     this.respin = this.respin.bind(this);
     this.giftSelectCallback = this.giftSelectCallback.bind(this);
+    this.messageHideCallback = this.messageHideCallback.bind(this);
+    this.handleBecome = this.handleBecome.bind(this);
 
     this.login = this.login.bind(this);
     this.ws = new WebSocket('ws://localhost:8089/', 'echo-protocol');
@@ -65,7 +54,11 @@ class App extends React.Component {
     
     this.ws.onopen = (arg) => {
       // connection opened
+      console.log("oooo OnOpen ooooo");
+      this.ws.send('{"type":"init"}');
     };
+
+
     
     /**
      * This is the main websocket message handler. Calls various funcitons based on the message type.
@@ -86,7 +79,12 @@ class App extends React.Component {
         //
       } else if(this.msg.type === "nextUser") {
         this.handleUpdateNextUser(this.msg);
+      } else if(this.msg.type === "reset") {
+        this.handleReset();
+      } else if(this.msg.type === "become") {
+        this.handleBecome();
       }
+
     };
     
     this.ws.onerror = (e) => {
@@ -95,6 +93,27 @@ class App extends React.Component {
     this.ws.onclose = this.logout; // function implemented elsewhere
   }
 
+  handleReset(){
+  
+    var copyState = this.state;
+    copyState.loggedIn="false";
+    copyState.loggedInUser="";
+    copyState.realAdminUser="";
+    copyState.isAdmin="false";
+    copyState.gamestate="play"; 
+    copyState.nextUser="";
+    copyState.itsMyTurn="false";
+    copyState.activeIndex=0;
+    copyState.remainingUsers=0;
+    copyState.messageShow= "true";
+    copyState.stealRound="false";
+    copyState.navbarMessage="";
+    copyState.msgHeading="Game has been reset by the administrator - please log in again";
+    copyState.msgText="";
+    Cookies.set('gwuser', '');
+    this.setState(copyState);
+
+  }
 
     /**
    * Refresh the view of the data.
@@ -138,40 +157,71 @@ class App extends React.Component {
     var copyState = this.state;
     copyState.loggedIn = "true";
     copyState.loggedInUser = msg.user;
+    //copyState.allData = msg.body;
+    copyState.messageShow="false";
+    //If the user "isadmin" then set the state to true
+    for(var i=0;i<this.state.allData.length;i++){
+      if(this.state.allData[i].email === msg.user) {
+         if(this.state.allData[i].isAdmin === "true") {
+           copyState.isAdmin = "true";
+         } 
+      }
+    }
     this.setState(copyState);
+    console.log("::::::::::::setting cookie  " +this.state.allData.type);
     Cookies.set('gwuser', msg.user);
   }
 
+  
 
   /**
    * Update things to do with next user beiing chosen.
    * @param {*} msg 
    */  
   handleUpdateNextUser = async (msg) =>{
-      copyState = this.state;
-      copyState.messageShow = true;
-      copyState.msgHeading="Oooh, who is the next player going to be?";
+      
+      var copyState = this.state;
+
+      //Change the message if the next user is a victem of a steal
+      copyState.messageShow = "true";
+      if(msg.wasStealVictim === "true") {
+        copyState.stealRound="true";
+        copyState.msgHeading="Some bugger swiped your gift while you weren't looking!";
+      } else {
+        copyState.msgHeading="Oooh, who is the next player going to be?";
+        copyState.stealRound="false";
+      }
       copyState.msgText="";
-      this.setState(copyState);
+      this.setState(copyState); //update with the message above
+
+      //Set the state so that the UI is updated then create a 3 second countdown for the next user.
       await delay(1000);
       var i;
       for(i=3;i>=1;i--) {
         copyState.msgHeading=i;
-        this.setState(copyState);
+        this.setState(copyState); // countdown
         await delay(1000);
       }
-      copyState.msgHeading= msg.email + ", come on down!";
-      this.setState(copyState);
 
-    var copyState = this.state;
+      //Once the countdown has finished then showwho's turn it is
+      if(msg.wasStealVictim === "true") {
+        copyState.msgHeading= "Never mind, choose another pressie " +msg.email ;
+      } else {
+        copyState.msgHeading= "Yey! It's your turn " +msg.email +"!" ;
+      }
+      this.setState(copyState); //show the message
+
+    copyState = this.state;
     copyState.nextUser = msg.email;
     copyState.remainingUsers = msg.remainingUsers;
+    copyState.navbarMessage="Current player " +msg.email;
     
     if(msg.email === this.state.loggedInUser) {
       copyState.itsMyTurn = "true";
     } else {
       copyState.itsMyTurn = "false";
     }
+
     this.setState(copyState);
   }
 
@@ -180,6 +230,7 @@ class App extends React.Component {
    * performs initialisation routines.
    */
   componentDidMount() {
+    
     console.log("App:ComponentDidConnect User:" +Cookies.get("gwuser") );
     // If the login cookie (gwuser) was set then fetch it and set the username back in the state. 
     if(Cookies.get("gwuser")) {
@@ -207,12 +258,13 @@ class App extends React.Component {
    */
   logout = () => {
     console.log("logout");
-    this.ws.send('{ "type": "logout", "body": "' +this.state.loggedInUser +'"}');
+   
     Cookies.set('gwuser', '');
     var copyState = this.state;
     copyState.loggedIn = "false";
     copyState.loggedInUser = "";
     this.setState(copyState);
+    this.ws.send('{ "type": "logout", "body": "' +this.state.loggedInUser +'"}');
   }
 
   /**
@@ -285,12 +337,33 @@ class App extends React.Component {
   }
 
   /**
+   * Admin function to become any player. Simply swapping the logged in user for the user sent through.
+   */
+  handleBecome = (user) => {
+    console.log("become " +user);
+    var copyState = this.state;
+    copyState.realAdminUser = copyState.loggedInUser;
+    copyState.loggedInUser = user;
+    //var nextUserEvent={"type":"nextUser", "email": this.state.nextUser, "remainingUsers": this.state.remainingUsers, "wasStealVictim": this.state.wasStealVictim};
+    // if becoming a user who's tiurn it is then set itsMyTurn
+    if(user === this.state.nextUser) {
+      copyState.itsMyTurn = "true";
+    }
+    this.setState(copyState);
+    //this.handleUpdateNextUser(nextUserEvent);
+  }
+
+  /**
    *   Callback for coverflow component 
    *    When a gift is selected then set the data to show it. Check the activeindex for the gift to be updated.
    */
   giftSelectCallback = (index) => {
     //unwrap this present!
-    this.unwrap(index);
+    this.copystate = this.state;
+    this.copystate.allData[index].state = "unwrapped";
+    this.copystate.allData[index].receiver = this.state.loggedInUser;
+    this.copystate.itsMyTurn = "false";
+    this.setState(this.copystate);
     this.ws.send('{ "type": "data", "body":' +JSON.stringify(this.state.allData) +'}');
     this.ws.send('{ "type": "giftSelect", "user":"' +this.state.loggedInUser +'"}');
   }
@@ -314,11 +387,20 @@ class App extends React.Component {
    */
   giftStealCallback = (index) => {
     // give the go back to who owned the present.
-    this.ws.send('{ "type": "data", "body":' +JSON.stringify(this.state.allData) +'}');
-    this.ws.send('{ "type": "giftSteal", "user":"' +this.state.loggedInUser +'", "victim":"' +this.state.allData[index].receiver +'"}');
+    var victim = this.state.allData[index].receiver; //The original receiver has had it sttolen!
+    var theif = this.state.loggedInUser;
     this.unwrap(index);
+    this.ws.send('{ "type": "data", "body":' +JSON.stringify(this.state.allData) +'}');
+    this.ws.send('{ "type": "giftSteal", "user":"' +theif +'", "victim":"' +victim +'"}');
     
   }
+
+  messageHideCallback = () => {
+    this.copystate = this.state;
+    this.copystate.messageShow = "false";
+    this.setState(this.copystate);
+  }
+
 
   /**
    * The main render component of the whole game.
@@ -326,22 +408,27 @@ class App extends React.Component {
     render() {
       return(
         <div className="App">
-          <NavBar parentState={this.state}  loginFunc={this.login} logoutFunc={this.logout} userLoggedIn={this.state.loggedIn} nextUser={this.state.nextUser} gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn}/>  
+          <NavBar parentState={this.state}  loginFunc={this.login} logoutFunc={this.logout} userLoggedIn={this.state.loggedIn} nextUser={this.state.nextUser} gamestate={this.state.gamestate} itsMyTurn={this.state.itsMyTurn}/>  
           
-          {this.state.loggedInUser === "gcolman" ? (
-          <Adminbar parentState={this.state} start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} respin={this.respin}  />
+          {this.state.isAdmin === "true" ? (
+            <div>
+            <Adminbar parentState={this.state} start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} respin={this.respin} become={this.handleBecome} />
+            </div> 
           ) : (
             <div/>
           )} 
-          {this.state.messageShow &&
-            <Message parentState={this.state}/>
-          }
+
+          {this.state.messageShow === "true" ? (
+            <Message parentState={this.state} messageHideCallback={this.messageHideCallback} />
+            ) : (
+              <div/>
+            )} 
           {this.state.gamestate === "stopped" ? 
             (<div>
                 <Lobby/>
             </div> )
           :(
-            <CoverFlowComponent giftData={this.state.allData} giftSelectCallback={this.giftSelectCallback} giftStealCallback={this.giftStealCallback} activeIndex={this.state.activeIndex} loggedIn={this.state.loggedIn}  gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn}/>
+            <CoverFlowComponent giftData={this.state.allData} giftSelectCallback={this.giftSelectCallback} giftStealCallback={this.giftStealCallback} activeIndex={this.state.activeIndex} loggedIn={this.state.loggedIn}  gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn} isStealRound={this.state.stealRound}/>
           )}
           <div>
             <Userlist loggedInUsers={this.state.disp}  />

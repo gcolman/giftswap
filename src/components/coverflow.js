@@ -51,14 +51,14 @@ class CoverFlowComponent extends React.Component {
                                         <Button variant="success" onClick={event => this.props.giftSelectCallback(i)}>Take me I'm yours!</Button>
                                     ):(<div/>)}
                                     <br/>
-                                <span> Merry Xmas <br/>from {pressie.giver}</span>
+                                <span> Merry Xmas <br/>from xx</span>
                                 </div>   
                             </span>
                             ) : (
                                 <span>
                                 <img src={process.env.PUBLIC_URL + 'images/' +pressie.unwrapped} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
                                 <div className="navbar-brand" >
-                                    {this.props.loggedIn === "true" && this.props.gamestate === "started" && this.props.itsMyTurn === "true" ? ( // check weather to show the unwrap buttons etc.
+                                    {this.props.loggedIn === "true" && this.props.gamestate === "started" && this.props.itsMyTurn === "true" && this.props.isStealRound === "false" ? ( // check weather to show the unwrap buttons etc.
                                         <Button variant="danger" onClick={event => this.props.giftStealCallback(i)}>Steal this from {pressie.receiver}</Button>
                                     ):(<div/>)}
                                       <br/>
@@ -74,6 +74,9 @@ class CoverFlowComponent extends React.Component {
             </Coverflow>
         </div>
     </div>
+
+
+
         )
     }
 }
