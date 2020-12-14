@@ -12,7 +12,7 @@ class Adminbar extends React.Component {
 
   render() {
     return(
-      <nav className="navbar navbar-light bg-light">
+      <nav className="xmasBackground navbar navbar-light bg-light">
         <div className="navbar-brand" >
           
           { this.props.parentState.gamestate === "started" ? (
@@ -21,7 +21,7 @@ class Adminbar extends React.Component {
             <Button onClick={this.props.respin}>Next Player</Button> &nbsp;
             <Button onClick={this.props.stop}>stop</Button>&nbsp;
             <Button onClick={this.props.reset}>reset</Button> &nbsp;
-            <Button onClick={this.props.reset}>reload</Button> &nbsp;
+            <Button onClick={this.props.reload}>reload</Button> &nbsp;
            </div> 
           ):(<Button onClick={this.props.start}>start</Button>)}
           

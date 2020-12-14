@@ -13,13 +13,28 @@
   }
 }
 
+.xmasBackground {
+  background-image: url("./backround.jpg");
+  width: 100%;
+}
+
+.coverText {
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.smallText {
+  font-size: calc(2px + 2vmin);
+  color: rgb(126, 126, 126);
+}
+
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background-image: url("./backround.jpg");
   display: flex;
-  flex-direction: column;
+  width: 100%;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   font-size: calc(10px + 2vmin);
   color: white;
 }
@@ -53,4 +68,32 @@
   -ms-transform: translate(-50%,-50%);
 }
 
+.div-table {
+  display: table;         
+  width: 100%;         
+  border-spacing: 5px; /* cellspacing:poor IE support for  this */
+}
+.div-table-row {
+  display: table-row;
+  width: auto;
+  clear: both;
+}
+.div-table-col {
+  float: left; /* fix for  buggy browsers */
+  display: table-column;         
+  width: 200px;         
+}
 
+
+.modalText{
+  text-align: center;
+  font-size: 28px;
+  color: rgb(0, 0, 0);
+}
+
+.mainmodal .modal-content{
+  text-align: center;
+  background-color: rgb(218, 218, 218);
+  color: #fff;
+  
+}

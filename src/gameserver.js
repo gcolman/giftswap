@@ -2,6 +2,8 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const wss = new WebSocket.Server({ port: 8089 });
 const ADMIN = "gcolman";
+const INIT_FILE="./config.json";
+const LATEST_STATE_FILE="./latestState.json"
 
  currentData ={};
 var browseEvent ={"type": "browse","body": "2",};
@@ -28,22 +30,23 @@ function handleInit() {
   allUsers = [];
   allUsersRemainingToPlay = [];
   allUsersHavingPlayed = [];
-  readInitFile();
+  readFile(INIT_FILE);
+  //allUsers = this.currentData.body.map(user => user.email);
   allUsersRemainingToPlay = allUsers;
   //this.state.remainingUsers = allUsersRemainingToPlay.length;
 };
 
 
-function readInitFile (){
+function readFile (filename){
   try {
-    data = fs.readFileSync('./config.json', 'utf8')
+    data = fs.readFileSync(filename, 'utf8')
     this.currentData = JSON.parse(data);
     console.log("-----> reading file");
     allUsers = this.currentData.body.map(user => user.email);
+
   } catch (err) {
     console.error(err)
   }
-  
 };
 
 
@@ -76,16 +79,21 @@ wss.on('connection', function connection(ws) {
     } else if(msg.type ==="data") {
       currentData = msg;
       console.log("/nsetting data to /n" +JSON.stringify(currentData));
-      BroadcastMessage(JSON.stringify(msg.body));
+      BroadcastMessage(JSON.stringify(msg));
     } else if(msg.type ==="reset") {
       handleInit();
       resetEvent.body = "reset";
       BroadcastMessage(JSON.stringify(resetEvent));
       BroadcastMessage(JSON.stringify(currentData));
+    } else if(msg.type ==="reload") {
+      resetEvent.body = "reload";
+      reloadData();
     } else if(msg.type ==="giftSelect") {
       handleGiftSelect(msg);
     }  else if(msg.type ==="giftSteal") {
       handleGiftSwap(msg);
+    }  else if(msg.type ==="move") {
+      BroadcastMessage(JSON.stringify(msg));
     } 
   });
   //endon
@@ -100,11 +108,34 @@ BroadcastMessage = (data) => {
 };
 
 /**
- * Handle a gift selection event
+ * Reload the data from the file that holds the latest game state.
+ */
+reloadData = () => {
+  readFile(LATEST_STATE_FILE);
+  //allUsers = currentData.body.map(user => user.email);
+  //reloading needs to update the list of users that have played and are yet to play
+  allUsersRemainingToPlay = allUsers;
+  for(i=0;i<currentData.body.length;i++){
+    if(currentData.body[i].receiver) {
+        //remove the user from allremainingtoplay
+        for(x=0;x<allUsersRemainingToPlay.length;x++){
+          if(allUsersRemainingToPlay[x] === currentData.body[i].receiver) {
+            allUsersRemainingToPlay.splice(x, 1); 
+          }
+        }
+      }
+    }
+  BroadcastMessage(JSON.stringify(currentData));
+}
+
+/**
+ * Handle a gift selection event. The client will call this event. The client will send a seperate data
+ * event which will broadcast the latest data changes.
  */
 handleGiftSelect = (msg) => {
   //remove the user from the remaining users
   removeRemainingUser(msg.user);
+  persistUpdates();
 }
 
 removeRemainingUser = (user) => {
@@ -138,30 +169,19 @@ handleLogin = (data, ws) => {
   
   if(allUsers.includes(loginObj.body)) { // check to see if the user is in the valid list of loggedInUsers taken from allUsers
     
-   // if(!loggedInUsers.body.includes(loginObj.body) || loginObj.body === "gcolman" ) { // process if not already logged in.
-      
+    //If a new login then pus to the loggedINUsers array
     if(!loggedInUsers.body.includes(loginObj.body)) {
       loggedInUsers.body.push(loginObj.body);
     }
       
       // send the current data back to the user
-      
-//      console.log("ffffffff" +JSON.stringify(currentData) +"ffffffff");
-      //loginData.type = "loginSuccess";
-      //loginData.user = loginObj.body;
       loginSuccess.user=msg.body;
       ws.send(JSON.stringify(loginSuccess));
-  //    console.log("sssssssssssss" +JSON.stringify(currentData) +"sssssssssss");
+
       //send everyone the updated list of loggedInUsers
       BroadcastMessage(JSON.stringify(loggedInUsers));
-
       BroadcastMessage(JSON.stringify(currentData));
-      //BroadcastMessage(JSON.stringify(stateEvent));
-    /*}
-  } else {
-    console.log(loginError);
-    ws.send(JSON.stringify(loginError)); //send an error message back
-  }*/
+
 }};
 
 
@@ -205,7 +225,9 @@ handleNewData = (data) => {
 };
 
 
-
+/**
+ * write latest data to latestState.json
+ */
 persistUpdates = () =>{
-
+  fs.writeFileSync(LATEST_STATE_FILE, JSON.stringify(currentData));
 }

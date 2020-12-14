@@ -2,7 +2,7 @@ import React from 'react';
 import NavBar from "./components/navbar";
 import Adminbar from "./components/Adminbar";
 import Message from "./components/Message";
-//import ModalMessage from "./components/ModalMessage";
+import ModalMessage from "./components/ModalMessage";
 import CoverFlowComponent from "./components/coverflow";
 import Cookies from 'js-cookie'
 import './App.css';
@@ -27,9 +27,10 @@ class App extends React.Component {
         gamestate:"play",     // State of the game stopped:play:paused
         nextUser:"",          // The next user to play the game. 
         itsMyTurn:"false",    // indicates if it's the current user's turn to play
-        activeIndex:0,        // The index of the present in the carousel - should move when this changes
+        activeIndex:3,        // The index of the present in the carousel - should move when this changes
         remainingUsers:0,     // How many users are left to play
         stealRound:"false",   // Indicates that this round of play started with a steal. If so no more steals allowed?
+        follow:"true",        // follow the players moves through the 
         navbarMessage:"",     // The message to show in the navbar
         messageShow: "true",    // Boolean to indicate if the message jumbptron should be shown.
         msgHeading:"Welcome to the UKI SA Christmas Gift Game",
@@ -41,6 +42,9 @@ class App extends React.Component {
     this.pause = this.pause.bind(this);
     this.reset = this.reset.bind(this);
     this.respin = this.respin.bind(this);
+    this.reload = this.reload.bind(this);
+    this.moveCallback = this.moveCallback.bind(this);
+    this.followCallback = this.followCallback.bind(this);
     this.giftSelectCallback = this.giftSelectCallback.bind(this);
     this.messageHideCallback = this.messageHideCallback.bind(this);
     this.handleBecome = this.handleBecome.bind(this);
@@ -83,6 +87,8 @@ class App extends React.Component {
         this.handleReset();
       } else if(this.msg.type === "become") {
         this.handleBecome();
+      } else if(this.msg.type === "move") {
+        this.handleMove(this.msg.index);
       }
 
     };
@@ -94,7 +100,6 @@ class App extends React.Component {
   }
 
   handleReset(){
-  
     var copyState = this.state;
     copyState.loggedIn="false";
     copyState.loggedInUser="";
@@ -103,7 +108,7 @@ class App extends React.Component {
     copyState.gamestate="play"; 
     copyState.nextUser="";
     copyState.itsMyTurn="false";
-    copyState.activeIndex=0;
+    copyState.activeIndex=4;
     copyState.remainingUsers=0;
     copyState.messageShow= "true";
     copyState.stealRound="false";
@@ -112,17 +117,29 @@ class App extends React.Component {
     copyState.msgText="";
     Cookies.set('gwuser', '');
     this.setState(copyState);
-
   }
 
     /**
-   * Refresh the view of the data.
+   * Called when someone has broadcast a new set of data. Refresh this view of the data.
    * @param {*} msg 
    */
   handleUpdateData(msg){
     var copyState = this.state;
     copyState.allData = msg.body;
     this.setState(copyState);
+  }
+
+    /**
+   * A move event tracks the current users browsing though the pressies. Updates the current view so that you can follow.
+   * @param {*} msg 
+   */
+  handleMove = (index) =>{
+    if(this.state.follow) {
+      console.log("move to " +index);
+      var copyState = this.state;
+      copyState.activeIndex =index-0;
+      this.setState(copyState);
+    }
   }
 
   /**
@@ -188,7 +205,7 @@ class App extends React.Component {
         copyState.stealRound="true";
         copyState.msgHeading="Some bugger swiped your gift while you weren't looking!";
       } else {
-        copyState.msgHeading="Oooh, who is the next player going to be?";
+        copyState.msgHeading="Choosing next player...";
         copyState.stealRound="false";
       }
       copyState.msgText="";
@@ -198,16 +215,16 @@ class App extends React.Component {
       await delay(1000);
       var i;
       for(i=3;i>=1;i--) {
-        copyState.msgHeading=i;
+        copyState.msgText=i;
         this.setState(copyState); // countdown
         await delay(1000);
       }
 
       //Once the countdown has finished then showwho's turn it is
       if(msg.wasStealVictim === "true") {
-        copyState.msgHeading= "Never mind, choose another pressie " +msg.email ;
+        copyState.msgText= "Never mind, choose another pressie " +msg.email ;
       } else {
-        copyState.msgHeading= "Yey! It's your turn " +msg.email +"!" ;
+        copyState.msgText= "Choose a gift to unwrap " +msg.email +"!" ;
       }
       this.setState(copyState); //show the message
 
@@ -337,6 +354,14 @@ class App extends React.Component {
   }
 
   /**
+   * Rest the whole game
+   */
+  reload = () => {
+    console.log("reload!");
+    this.ws.send('{ "type": "reload"}');
+  }
+
+  /**
    * Admin function to become any player. Simply swapping the logged in user for the user sent through.
    */
   handleBecome = (user) => {
@@ -395,31 +420,54 @@ class App extends React.Component {
     
   }
 
+  /**
+   * Show or hide message.
+   */
   messageHideCallback = () => {
     this.copystate = this.state;
     this.copystate.messageShow = "false";
     this.setState(this.copystate);
   }
 
+  /**
+   * broadcast a move event if the playing player.
+   * @param {*} giftindex 
+   */
+  moveCallback = (giftindex) => {
+    if(this.state.itsMyTurn === "true") {
+     console.log(giftindex);
+     this.ws.send('{ "type": "move", "index":"' +giftindex  +'"}');
+    }
+  }
+
+  /**
+   * callback to set and unset follow flag
+   */
+  followCallback = () => {
+    console.log(this.copystate.follow);
+    this.copystate = this.state;
+    this.copystate.follow = !this.copystate.follow;
+    this.setState(this.copystate);
+  }
 
   /**
    * The main render component of the whole game.
    */
     render() {
       return(
-        <div className="App">
+        <div className="xmasBackground App">
           <NavBar parentState={this.state}  loginFunc={this.login} logoutFunc={this.logout} userLoggedIn={this.state.loggedIn} nextUser={this.state.nextUser} gamestate={this.state.gamestate} itsMyTurn={this.state.itsMyTurn}/>  
           
           {this.state.isAdmin === "true" ? (
             <div>
-            <Adminbar parentState={this.state} start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} respin={this.respin} become={this.handleBecome} />
+            <Adminbar parentState={this.state} start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} reload={this.reload} respin={this.respin} become={this.handleBecome} />
             </div> 
           ) : (
             <div/>
           )} 
 
           {this.state.messageShow === "true" ? (
-            <Message parentState={this.state} messageHideCallback={this.messageHideCallback} />
+            <ModalMessage parentState={this.state} messageHideCallback={this.messageHideCallback} />
             ) : (
               <div/>
             )} 
@@ -428,10 +476,10 @@ class App extends React.Component {
                 <Lobby/>
             </div> )
           :(
-            <CoverFlowComponent giftData={this.state.allData} giftSelectCallback={this.giftSelectCallback} giftStealCallback={this.giftStealCallback} activeIndex={this.state.activeIndex} loggedIn={this.state.loggedIn}  gamestate={this.state.gamestate} nextUser={this.state.nextUser} itsMyTurn={this.state.itsMyTurn} isStealRound={this.state.stealRound}/>
+            <CoverFlowComponent followCallback={this.followCallback}  moveCallback={this.moveCallback}  giftSelectCallback={this.giftSelectCallback} giftStealCallback={this.giftStealCallback} parentState={this.state}  />
           )}
           <div>
-            <Userlist loggedInUsers={this.state.disp}  />
+            <Userlist allData={this.state.allData}  />
           </div>
       </div>
       )

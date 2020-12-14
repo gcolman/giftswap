@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "react-bootstrap";
-
+import '../App.css';
 
 class NavBar extends React.Component {
   constructor(props) {
@@ -14,16 +14,18 @@ class NavBar extends React.Component {
 
   render() {
     return(
-      <nav className="navbar navbar-light bg-light">
+      <nav className="App-header">
       <div className="navbar-brand">
+        
         <span className="badge badge-pill badge-info m-2" style={{ width: 50 }}>
           {this.props.parentState.remainingUsers}
+          
         </span>
         Players Remaining
       </div>
-      <div className="navbar-brand" >
-          {this.props.parentState.navbarMessage}
-      </div>
+      <img src={process.env.PUBLIC_URL + 'images/RHTrans.png'} />
+
+
       {this.props.userLoggedIn === "false" ? (
           <div className="navbar-brand" >
               <input type="text" name="myUser" value={this.state.user} onChange={this.handleChange} ></input>&nbsp; &nbsp;
