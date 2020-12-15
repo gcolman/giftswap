@@ -8,6 +8,7 @@
     "prop-types": "^15.7.2",
     "radium": "^0.26.1",
     "react": "^17.0.1",
+    "bootstrap": "^4.5.3",
     "react-bootstrap": "^1.4.0",
     "react-cookie": "^4.0.3",
     "react-coverflow": "^0.2.20",
