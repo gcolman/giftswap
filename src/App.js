@@ -51,7 +51,8 @@ class App extends React.Component {
     this.handleBecome = this.handleBecome.bind(this);
 
     this.login = this.login.bind(this);
-    this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
+    //this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
+    this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
 
@@ -199,11 +200,16 @@ class App extends React.Component {
   handleUpdateNextUser = async (msg) =>{
       
       var copyState = this.state;
-
       this.showChangeUserMessage(msg);
-      this.countdownUserMessage(DELAY_TIME);
-
-
+      
+      //Set the state so that the UI is updated then create a 3 second countdown for the next user.
+      await delay(DELAY_TIME);
+      var i;
+      for(i=3;i>=1;i--) {
+        copyState.msgText=i;
+        this.setState(copyState); // countdown
+        await delay(1000);
+      }
 
       //Once the countdown has finished then showwho's turn it is
       if(msg.wasStealVictim === "true") {
@@ -223,7 +229,6 @@ class App extends React.Component {
     } else {
       copyState.itsMyTurn = "false";
     }
-
     this.setState(copyState);
   }
 
@@ -243,17 +248,7 @@ class App extends React.Component {
     this.setState(copyState); //update with the message above
   }
 
-  countdownUserMessage = async (delayTime) => {
-     var copyState = this.state;
-      //Set the state so that the UI is updated then create a 3 second countdown for the next user.
-      await delay(delayTime);
-      var i;
-      for(i=3;i>=1;i--) {
-        copyState.msgText=i;
-        this.setState(copyState); // countdown
-        await delay(1000);
-      }
-  }
+
 
   /**
    * performs initialisation routines.
