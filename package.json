@@ -4,10 +4,6 @@
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.1",
-    "@testing-library/jest-dom": "^5.11.6",
-    "@testing-library/react": "^11.2.0",
-    "@testing-library/user-event": "^12.2.2",
-    "bootstrap": "^4.5.3",
     "js-cookie": "^2.2.1",
     "prop-types": "^15.7.2",
     "radium": "^0.26.1",
@@ -15,14 +11,11 @@
     "react-bootstrap": "^1.4.0",
     "react-cookie": "^4.0.3",
     "react-coverflow": "^0.2.20",
-    "react-custom-roulette": "^1.1.5",
     "react-dom": "^17.0.1",
     "react-reveal": "^1.2.2",
     "react-scripts": "4.0.0",
     "react-split-flap-display": "^0.3.2",
-    "react-websocket": "^2.1.0",
     "styled-components": "^5.2.1",
-    "web-vitals": "^0.2.4"
   },
   "scripts": {
     "start": "react-scripts start",

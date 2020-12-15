@@ -10,6 +10,7 @@ import Lobby from './components/Lobby';
 import Userlist from './components/Userlist';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
+const DELAY_TIME = 1000;
 const data = [];
 const users = [];
 
@@ -50,7 +51,7 @@ class App extends React.Component {
     this.handleBecome = this.handleBecome.bind(this);
 
     this.login = this.login.bind(this);
-    this.ws = new WebSocket('ws://localhost:8089/', 'echo-protocol');
+    this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
 
@@ -199,26 +200,10 @@ class App extends React.Component {
       
       var copyState = this.state;
 
-      //Change the message if the next user is a victem of a steal
-      copyState.messageShow = "true";
-      if(msg.wasStealVictim === "true") {
-        copyState.stealRound="true";
-        copyState.msgHeading="Some bugger swiped your gift while you weren't looking!";
-      } else {
-        copyState.msgHeading="Choosing next player...";
-        copyState.stealRound="false";
-      }
-      copyState.msgText="";
-      this.setState(copyState); //update with the message above
+      this.showChangeUserMessage(msg);
+      this.countdownUserMessage(DELAY_TIME);
 
-      //Set the state so that the UI is updated then create a 3 second countdown for the next user.
-      await delay(1000);
-      var i;
-      for(i=3;i>=1;i--) {
-        copyState.msgText=i;
-        this.setState(copyState); // countdown
-        await delay(1000);
-      }
+
 
       //Once the countdown has finished then showwho's turn it is
       if(msg.wasStealVictim === "true") {
@@ -242,6 +227,33 @@ class App extends React.Component {
     this.setState(copyState);
   }
 
+
+  showChangeUserMessage = (msg) => {
+    var copyState = this.state;
+    //Change the message if the next user is a victem of a steal
+    copyState.messageShow = "true";
+    if(msg.wasStealVictim === "true") {
+      copyState.stealRound="true";
+      copyState.msgHeading="Some bugger swiped your gift while you weren't looking!";
+    } else {
+      copyState.msgHeading="Choosing next player...";
+      copyState.stealRound="false";
+    }
+    copyState.msgText="";
+    this.setState(copyState); //update with the message above
+  }
+
+  countdownUserMessage = async (delayTime) => {
+     var copyState = this.state;
+      //Set the state so that the UI is updated then create a 3 second countdown for the next user.
+      await delay(delayTime);
+      var i;
+      for(i=3;i>=1;i--) {
+        copyState.msgText=i;
+        this.setState(copyState); // countdown
+        await delay(1000);
+      }
+  }
 
   /**
    * performs initialisation routines.
