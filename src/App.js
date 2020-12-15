@@ -51,8 +51,8 @@ class App extends React.Component {
     this.handleBecome = this.handleBecome.bind(this);
 
     this.login = this.login.bind(this);
-    this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
-    //this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
+    //this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
+    this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
     this.timerID = 0; 
@@ -118,10 +118,7 @@ class App extends React.Component {
     var timeout = 20000;  
     if (this.ws.readyState == this.ws.OPEN) {  
      this.ws.send('');  
-     console.log("ping");
-    }  else {
-      console.log("pong");
-    }
+    } 
     this.timerId = setTimeout(this.keepAlive, timeout);  
   }
 
@@ -224,12 +221,15 @@ class App extends React.Component {
   handleUpdateNextUser = async (msg) =>{
       
       var copyState = this.state;
+      if(msg.wasStealVictim === "false") {
+        this.resetStealable();
+      }
       this.showChangeUserMessage(msg);
       
       //Set the state so that the UI is updated then create a 3 second countdown for the next user.
       await delay(DELAY_TIME);
       var i;
-      for(i=3;i>=1;i--) {
+      for(i=1;i>=1;i--) {
         copyState.msgText=i;
         this.setState(copyState); // countdown
         await delay(1000);
@@ -272,7 +272,13 @@ class App extends React.Component {
     this.setState(copyState); //update with the message above
   }
 
-
+  resetStealable = () => {
+    var copyState = this.state;
+    for(var i=0;i< copyState.allData.length;i++){
+      copyState.allData[i].stealable="true";
+    }
+    this.setState();
+  }
 
   /**
    * performs initialisation routines.
@@ -432,6 +438,7 @@ class App extends React.Component {
     this.copystate = this.state;
     this.copystate.allData[index].state = "unwrapped";
     this.copystate.allData[index].receiver = this.state.loggedInUser;
+    this.copystate.allData[index].stealable = "false";
     this.copystate.itsMyTurn = "false";
     this.setState(this.copystate);
   }

@@ -58,7 +58,7 @@ class CoverFlowComponent extends React.Component {
                                 <span>
                                 <img src={process.env.PUBLIC_URL + 'images/' +pressie.unwrapped} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
                                 <div className="navbar-brand" >
-                                    {this.props.parentState.loggedIn === "true" && this.props.parentState.gamestate === "started" && this.props.parentState.itsMyTurn === "true" && this.props.parentState.stealRound === "false" ? ( // check weather to show the unwrap buttons etc.
+                                    {this.props.parentState.loggedIn === "true" && this.props.parentState.gamestate === "started" && this.props.parentState.itsMyTurn === "true" && pressie.stealable === "true" ? ( // check weather to show the unwrap buttons etc.
                                         <Button variant="danger" onClick={event => this.props.giftStealCallback(i)}>Steal this from {pressie.receiver}</Button>
                                     ):(<div/>)}
                                       <br/>
