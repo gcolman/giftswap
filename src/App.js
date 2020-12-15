@@ -97,8 +97,15 @@ class App extends React.Component {
     
     this.ws.onerror = (e) => {
         // an error occurred
+        console.log("AN ERROR IN WS " +e);
     };
-    this.ws.onclose = this.logout; // function implemented elsewhere
+   
+    this.ws.onclose = () =>{
+
+      console.log("WS CLOSED ");
+
+      //this.logout; // function implemented elsewhere
+    };
   }
 
   handleReset(){
