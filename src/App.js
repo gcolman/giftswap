@@ -51,8 +51,8 @@ class App extends React.Component {
     this.handleBecome = this.handleBecome.bind(this);
 
     this.login = this.login.bind(this);
-    //this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
-    this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
+    this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
+    //this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
     this.timerID = 0; 
