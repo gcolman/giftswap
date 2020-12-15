@@ -35,7 +35,7 @@ class App extends React.Component {
         navbarMessage:"",     // The message to show in the navbar
         messageShow: "true",    // Boolean to indicate if the message jumbptron should be shown.
         msgHeading:"Welcome to the UKI SA Christmas Gift Game",
-        msgText:"The rules: Log into the app above. When it's your turn, browse through the gifts in the carousel and you have the option of unwrapping a new present or, you can steal an already unwrapped present from one of ypur colleagues! If a gift is stolen from you then you need to unwrap a new present! Have fun and Merry Christmas!"
+        msgText:"THE RULES - Log into the app with your email address. When it's your turn, browse through the gifts in the carousel and you have the option of unwrapping a new present or you can steal an already unwrapped present from one of your colleagues! If a gift is stolen from you then you need to unwrap a new present! Have fun and Merry Christmas!"
       };
 
     this.start = this.start.bind(this);
@@ -55,13 +55,14 @@ class App extends React.Component {
     //this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
-
+    this.timerID = 0; 
 
     
     this.ws.onopen = (arg) => {
       // connection opened
       console.log("oooo OnOpen ooooo");
       this.ws.send('{"type":"init"}');
+      this.keepAlive();
     };
 
 
@@ -101,11 +102,27 @@ class App extends React.Component {
     };
    
     this.ws.onclose = () =>{
-
       console.log("WS CLOSED ");
+      this.cancelKeepAlive();
 
-      //this.logout; // function implemented elsewhere
     };
+  }
+
+  cancelKeepAlive = () =>{  
+    if (this.timerId) {  
+        clearTimeout(this.timerId);  
+    }  
+  }
+
+  keepAlive = () => { 
+    var timeout = 20000;  
+    if (this.ws.readyState == this.ws.OPEN) {  
+     this.ws.send('');  
+     console.log("ping");
+    }  else {
+      console.log("pong");
+    }
+    this.timerId = setTimeout(this.keepAlive, timeout);  
   }
 
   handleReset(){

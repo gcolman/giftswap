@@ -49,13 +49,19 @@ function readFile (filename){
   }
 };
 
+function noop() {}
+
+function heartbeat() {
+  console.log("pong");
+  this.isAlive = true;
+}
 
 /**
  * The main websocket for the game server.
  */
 wss.on('connection', function connection(ws) {
  
- 
+  ws.isAlive = true;
 
   ws.on('message', function incoming(data) {
     msg = JSON.parse(data);
@@ -97,7 +103,21 @@ wss.on('connection', function connection(ws) {
     } 
   });
   //endon
+
+
+  ws.on('pong', heartbeat);
+
 });
+
+
+const interval = setInterval(function ping() {
+  wss.clients.forEach(function each(ws) {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping(noop);
+  });
+}, 30000);
+
 
 BroadcastMessage = (data) => {
   wss.clients.forEach(function each(client) {

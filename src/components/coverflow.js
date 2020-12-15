@@ -51,7 +51,7 @@ class CoverFlowComponent extends React.Component {
                                         <Button variant="success" onClick={event => this.props.giftSelectCallback(i)}>Take me I'm yours!</Button>
                                     ):(<div/>)}
                                     <br/>
-                                <span class="coverText">- Open Me! -</span>
+                                <span class="coverText"></span>
                                 </div>   
                             </span>
                             ) : (
@@ -62,7 +62,7 @@ class CoverFlowComponent extends React.Component {
                                         <Button variant="danger" onClick={event => this.props.giftStealCallback(i)}>Steal this from {pressie.receiver}</Button>
                                     ):(<div/>)}
                                       <br/>
-                                <span class="coverText">Merry Christmas<br/>- {pressie.receiver} -</span>
+                                <span class="coverText">It's Yours!<br/>- {pressie.receiver} -</span>
                                 </div>   
                             </span>
                             )}  
