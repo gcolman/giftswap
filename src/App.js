@@ -10,7 +10,7 @@ import Lobby from './components/Lobby';
 import Userlist from './components/Userlist';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
-const DELAY_TIME = 1000;
+const DELAY_TIME = 100;
 const data = [];
 const users = [];
 
@@ -51,9 +51,9 @@ class App extends React.Component {
     this.handleBecome = this.handleBecome.bind(this);
 
     this.login = this.login.bind(this);
-    this.ws = new WebSocket('ws://giftswap-gameserver-secretsanta.gcolman001-8e403d02da27f23cda259248b817e83d-0000.eu-gb.containers.appdomain.cloud/8089', 'echo-protocol');
+    //this.ws = new WebSocket('ws://giftswap-gameserver-secretsanta.gcolman001-8e403d02da27f23cda259248b817e83d-0000.eu-gb.containers.appdomain.cloud/8089', 'echo-protocol');
     //this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
-    //this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
+    this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
     this.msg = "";
     this.copy = [];
     this.timerID = 0; 
@@ -232,7 +232,7 @@ class App extends React.Component {
       for(i=1;i>=1;i--) {
         copyState.msgText=i;
         this.setState(copyState); // countdown
-        await delay(1000);
+        await delay(DELAY_TIME);
       }
 
       //Once the countdown has finished then showwho's turn it is

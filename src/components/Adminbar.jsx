@@ -22,6 +22,7 @@ class Adminbar extends React.Component {
             <Button onClick={this.props.stop}>stop</Button>&nbsp;
             <Button onClick={this.props.reset}>reset</Button> &nbsp;
             <Button onClick={this.props.reload}>reload</Button> &nbsp;
+            <Button onClick={this.props.reload}>reload</Button> &nbsp;
            </div> 
           ):(<Button onClick={this.props.start}>start</Button>)}
           

@@ -30,7 +30,7 @@ class CoverFlowComponent extends React.Component {
                 displayQuantityOfSide={3}
                 navigation={false}
                 enableScroll={false}
-                infiniteScroll={true}
+                infiniteScroll={false}
                 clickable={true}
                 active={this.props.parentState.activeIndex}
                 >
@@ -45,9 +45,9 @@ class CoverFlowComponent extends React.Component {
                         {/*  based ont he state in the giftData object. Button pressed calles function to set object to unwrapped */}
                         {this.props.parentState.allData[i].state==="wrapped" ? (
                             <span>
-                                <img src={process.env.PUBLIC_URL + 'images/' +pressie.wrapped} onClick={event => this.props.moveCallback(i)} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
+                                <img src={process.env.PUBLIC_URL + 'images/wrapped/' +pressie.wrapped} onClick={event => this.props.moveCallback(i)} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
                                 <div className="navbar-brand" >
-                                    {this.props.parentState.loggedIn === "true" && this.props.parentState.gamestate === "started" && this.props.parentState.itsMyTurn === "true" ? (
+                                    {this.props.parentState.loggedIn === "true"  && this.props.parentState.itsMyTurn === "true" ? (
                                         <Button variant="success" onClick={event => this.props.giftSelectCallback(i)}>Take me I'm yours!</Button>
                                     ):(<div/>)}
                                     <br/>
@@ -56,9 +56,9 @@ class CoverFlowComponent extends React.Component {
                             </span>
                             ) : (
                                 <span>
-                                <img src={process.env.PUBLIC_URL + 'images/' +pressie.unwrapped} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
+                                <img src={process.env.PUBLIC_URL + 'images/unwrapped/' +pressie.unwrapped} alt={pressie.giver} style={{display: 'block', width: '100%',}}/>
                                 <div className="navbar-brand" >
-                                    {this.props.parentState.loggedIn === "true" && this.props.parentState.gamestate === "started" && this.props.parentState.itsMyTurn === "true" && pressie.stealable === "true" ? ( // check weather to show the unwrap buttons etc.
+                                    {this.props.parentState.loggedIn === "true" && this.props.parentState.itsMyTurn === "true" && pressie.stealable === "true" ? ( // check weather to show the unwrap buttons etc.
                                         <Button variant="danger" onClick={event => this.props.giftStealCallback(i)}>Steal this from {pressie.receiver}</Button>
                                     ):(<div/>)}
                                       <br/>
@@ -71,8 +71,6 @@ class CoverFlowComponent extends React.Component {
                     )
 
                 )}
-                                <marquee>Especially for Erin...Merry Christmas!</marquee>
-
             </Coverflow>
         </div>
     </div>
