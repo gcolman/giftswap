@@ -10,7 +10,7 @@ import Lobby from './components/Lobby';
 import Userlist from './components/Userlist';
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
-const DELAY_TIME = 100;
+const DELAY_TIME = 3000;
 const data = [];
 const users = [];
 
@@ -263,7 +263,7 @@ class App extends React.Component {
     copyState.messageShow = "true";
     if(msg.wasStealVictim === "true") {
       copyState.stealRound="true";
-      copyState.msgHeading="Some bugger swiped your gift while you weren't looking!";
+      copyState.msgHeading="Some bugger swiped " +msg.email +"'s gift while no one was looking!";
     } else {
       copyState.msgHeading="Choosing next player...";
       copyState.stealRound="false";
