@@ -227,12 +227,12 @@ class App extends React.Component {
       this.showChangeUserMessage(msg);
       
       //Set the state so that the UI is updated then create a 3 second countdown for the next user.
-      await delay(DELAY_TIME);
+      await delay(1000);
       var i;
-      for(i=1;i>=1;i--) {
+      for(i=3;i>=1;i--) {
         copyState.msgText=i;
         this.setState(copyState); // countdown
-        await delay(DELAY_TIME);
+        await delay(1000);
       }
 
       //Once the countdown has finished then showwho's turn it is
