@@ -12,10 +12,15 @@ class Userlist extends React.Component {
   render() {
     return(
       <div>
-        <marquee class="coverText">Merry Christmas Erin...and all!</marquee>
         <div class="div-table smallText">
           <div class="div-table-row" >
-              ALREADY PLAYED
+            {this.props.wsConnectionState === 1 ?(
+              <div>CONNECTED</div>
+            ):(
+              <div>LOST CONNECTION</div>
+            ) 
+            }
+            
           </div>
           <div class="div-table-row" >
                 {this.props.allData.map((entry, i) => (

@@ -13,12 +13,14 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 const DELAY_TIME = 3000;
 const data = [];
 const users = [];
+const { WEBSOCKET_ADDRESS } = process.env;
 
 class App extends React.Component {
 
   constructor(props) {
     super(props);
     this.state = {  
+        wsConnectionState:"",           //holds the state of the websocket connection
         allData:data,         // Holds all of the pressie array data. This is what the front end UI displays 
         disp:users,           // A list of users in the game 
         loggedIn:"false",     // Is the current session logged onto the game
@@ -49,63 +51,67 @@ class App extends React.Component {
     this.giftSelectCallback = this.giftSelectCallback.bind(this);
     this.messageHideCallback = this.messageHideCallback.bind(this);
     this.handleBecome = this.handleBecome.bind(this);
-
     this.login = this.login.bind(this);
-    this.ws = new WebSocket('ws://giftswap-gameserver-secretsanta.gcolman001-8e403d02da27f23cda259248b817e83d-0000.eu-gb.containers.appdomain.cloud/8089', 'echo-protocol');
-    //this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
-    //this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
+
+    this.initWebSocket();
     this.msg = "";
     this.copy = [];
     this.timerID = 0; 
+  }
 
-    
+  
+
+  initWebSocket(){
+    //this.ws = new WebSocket('ws://giftswap-gameserver-secretsanta.gcolman001-8e403d02da27f23cda259248b817e83d-0000.eu-gb.containers.appdomain.cloud/8089', 'echo-protocol');
+    //this.ws = new WebSocket('ws://giftswap-gameserver-git-gctest.apps.clarksdale.demolab.local/8089/', 'echo-protocol');
+    this.ws = new WebSocket('ws:localhost:8089/', 'echo-protocol');
+
     this.ws.onopen = (arg) => {
       // connection opened
       this.ws.send('{"type":"init"}');
       this.keepAlive();
     };
 
-
-    
-    /**
+        /**
      * This is the main websocket message handler. Calls various funcitons based on the message type.
      */
-    this.ws.onmessage = (e) => {
-      console.log(e.data);
-      this.msg = JSON.parse(e.data);
-
-      if(this.msg.type === "data"){
-        this.handleUpdateData(this.msg);
-      } else if(this.msg.type === "state") {
-          this.handleUpdateState(this.msg);
-      } else if(this.msg.type === "users") {
-        this.handleUpdateUsers(this.msg);
-      } else if(this.msg.type === "loginSuccess") {
-        this.handleLoginSuccess(this.msg);
-      } else if(this.msg.type === "loginError") {
-        //
-      } else if(this.msg.type === "nextUser") {
-        this.handleUpdateNextUser(this.msg);
-      } else if(this.msg.type === "reset") {
-        this.handleReset();
-      } else if(this.msg.type === "become") {
-        this.handleBecome();
-      } else if(this.msg.type === "move") {
-        this.handleMove(this.msg.index);
-      }
-
-    };
+         this.ws.onmessage = (e) => {
+          console.log(e.data);
+          this.msg = JSON.parse(e.data);
     
-    this.ws.onerror = (e) => {
-        // an error occurred
-        console.log("AN ERROR IN WS " +e);
-    };
-   
-    this.ws.onclose = () =>{
-      console.log("WS CLOSED ");
-      this.cancelKeepAlive();
+          if(this.msg.type === "data"){
+            this.handleUpdateData(this.msg);
+          } else if(this.msg.type === "state") {
+              this.handleUpdateState(this.msg);
+          } else if(this.msg.type === "users") {
+            this.handleUpdateUsers(this.msg);
+          } else if(this.msg.type === "loginSuccess") {
+            this.handleLoginSuccess(this.msg);
+          } else if(this.msg.type === "loginError") {
+            //
+          } else if(this.msg.type === "nextUser") {
+            this.handleUpdateNextUser(this.msg);
+          } else if(this.msg.type === "reset") {
+            this.handleReset();
+          } else if(this.msg.type === "become") {
+            this.handleBecome();
+          } else if(this.msg.type === "move") {
+            this.handleMove(this.msg.index);
+          }
+    
+        };
+        
+        this.ws.onerror = (e) => {
+            // an error occurred
+            console.log("AN ERROR IN WS " +e);
+        };
+       
+        this.ws.onclose = () =>{
+          console.log("WS CLOSED ");
+          this.cancelKeepAlive();
+    
+        };
 
-    };
   }
 
   cancelKeepAlive = () =>{  
@@ -116,9 +122,14 @@ class App extends React.Component {
 
   keepAlive = () => { 
     var timeout = 20000;  
-    if (this.ws.readyState == this.ws.OPEN) {  
+    this.wsConnectionState = this.ws.readyState;
+    console.log("connection=" +this.wsConnectionState);
+    if (this.ws.readyState === this.ws.OPEN) {  
      this.ws.send('');  
-    } 
+    } else if (this.ws.readyState === this.ws.CLOSED){
+      console.log("WEBSOCKET is BUGGERED - Reinit");
+      this.initWebSocket();
+    }
     this.timerId = setTimeout(this.keepAlive, timeout);  
   }
 
@@ -494,6 +505,7 @@ class App extends React.Component {
     render() {
       return(
         <div className="xmasBackground App">
+          <div>connection : {this.wsConnectionState}</div>
           <NavBar parentState={this.state}  loginFunc={this.login} logoutFunc={this.logout} userLoggedIn={this.state.loggedIn} nextUser={this.state.nextUser} gamestate={this.state.gamestate} itsMyTurn={this.state.itsMyTurn}/>  
           
           {this.state.isAdmin === "true" ? (
@@ -501,6 +513,7 @@ class App extends React.Component {
             <Adminbar parentState={this.state} start={this.start} stop={this.stop} pause={this.pause} reset={this.reset} reload={this.reload} respin={this.respin} become={this.handleBecome} />
             </div> 
           ) : (
+            
             <div/>
           )} 
 
@@ -517,8 +530,8 @@ class App extends React.Component {
             <CoverFlowComponent followCallback={this.followCallback}  moveCallback={this.moveCallback}  giftSelectCallback={this.giftSelectCallback} giftStealCallback={this.giftStealCallback} parentState={this.state}  />
           )}
           <div>
-            <Userlist allData={this.state.allData}  />
-          </div>
+            <Userlist allData={this.state.allData} wsConnectionState={this.wsConnectionState} />
+          </div>  
       </div>
       )
     }
